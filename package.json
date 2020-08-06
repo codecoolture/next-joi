@@ -1,0 +1,60 @@
+{
+  "name": "next-joi",
+  "version": "1.0.0",
+  "description": "Validate NEXT.js API Routes with joi",
+  "keywords": [
+    "nextjs",
+    "joi",
+    "middleware",
+    "typescript"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts"
+  ],
+  "author": {
+    "email": "sergio@codecoolture.com",
+    "name": "Codecoolture",
+    "url": "https://codecoolture.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/codecoolture/next-joi"
+  },
+  "homepage": "https://github.com/codecoolture/next-joi#readme",
+  "repository": "https://github.com/codecoolture/next-joi",
+  "peerDependencies": {
+    "joi": "^17.1.1",
+    "next": "^9.5.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.8",
+    "@types/joi": "^14.3.4",
+    "@types/test-listen": "^1.1.0",
+    "@typescript-eslint/eslint-plugin": "^3.8.0",
+    "@typescript-eslint/parser": "^3.8.0",
+    "eslint": "^7.6.0",
+    "eslint-config-prettier": "^6.11.0",
+    "husky": "^4.2.5",
+    "isomorphic-unfetch": "^3.0.0",
+    "jest": "^26.2.2",
+    "joi": "^17.1.1",
+    "next": "^9.5.1",
+    "next-connect": "^0.8.1",
+    "prettier": "^2.0.5",
+    "test-listen": "^1.1.0",
+    "ts-jest": "^26.1.4",
+    "typescript": "^3.9.7"
+  },
+  "scripts": {
+    "prepublish": "yarn test && tsc",
+    "test": "jest"
+  },
+  "husky": {
+    "hooks": {
+      "pre-push": "yarn test"
+    }
+  }
+}
