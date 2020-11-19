@@ -1,7 +1,7 @@
 import { createServer, Server } from "http";
 import fetch from "isomorphic-unfetch";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-import { NextConnect } from "next-connect";
+import { NextConnect, RequestHandler } from "next-connect";
 import { apiResolver } from "next/dist/next-server/server/api-utils";
 import listen from "test-listen";
 
@@ -16,7 +16,10 @@ export class TestServer {
   private instance?: Server;
 
   public async inject(
-    handler: NextApiHandler | NextConnect<NextApiRequest, NextApiResponse>,
+    handler:
+      | NextApiHandler
+      | NextConnect<NextApiRequest, NextApiResponse>
+      | RequestHandler<NextApiRequest, NextApiResponse>,
     options: InjectOptions = {}
   ): Promise<Response> {
     this.instance = createServer((req, res) =>

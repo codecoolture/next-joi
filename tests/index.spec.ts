@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-import connect, { NextConnect } from "next-connect";
+import connect, { NextConnect, RequestHandler } from "next-connect";
 import validate, { ValidationSchemas } from "../src";
 import { createTestServer, TestServer } from "./utils/TestServer";
 
@@ -9,7 +9,10 @@ function postANewUser(_: NextApiRequest, res: NextApiResponse) {
   return res.json({ message: "Everything is okay!" });
 }
 
-type Handler = NextApiHandler | NextConnect<NextApiRequest, NextApiResponse>;
+type Handler =
+  | NextApiHandler
+  | NextConnect<NextApiRequest, NextApiResponse>
+  | RequestHandler<NextApiRequest, NextApiResponse>;
 
 type BuildSuiteOptions = {
   handlerBuilder: (schemas: ValidationSchemas, fn: NextApiHandler) => Handler;
@@ -114,7 +117,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
 
 describe("next-joi", () => {
   buildSuite({
-    handlerBuilder: (schemas, fn) => validate(schemas, fn),
+    handlerBuilder: (schemas, fn) => validate()(schemas, fn),
     title: "working as a simple NEXT middleware",
   });
 
@@ -122,10 +125,10 @@ describe("next-joi", () => {
     handlerBuilder: (schemas, fn) => {
       if (undefined === fn) {
         // next-connect throws an error if passing an undefined handler
-        return connect().post(validate(schemas));
+        return connect().post(validate()(schemas));
       }
 
-      return connect().post(validate(schemas), fn);
+      return connect().post(validate()(schemas), fn);
     },
     title: "working as a connect-like middleware",
   });
