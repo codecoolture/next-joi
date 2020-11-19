@@ -8,12 +8,14 @@ export type ValidationSchemas = {
   [K in keyof ValidableRequestFields]?: Schema;
 };
 
-type ValidationFunction = (
+export type ValidationFunction = (
   schemas: ValidationSchemas,
   handler?: NextApiHandler
 ) => NextApiHandler | RequestHandler<NextApiRequest, NextApiResponse>;
 
-export default function withJoi(): ValidationFunction {
+export type Configuration = { onFailAction: (req: NextApiRequest, res: NextApiResponse) => void | Promise<void> };
+
+export default function withJoi(config?: Configuration): ValidationFunction {
   return (schemas, handler) => {
     return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
       const fields: (keyof ValidableRequestFields)[] = ["body", "query"];
@@ -25,6 +27,10 @@ export default function withJoi(): ValidationFunction {
       });
 
       if (hasValidationErrors) {
+        if (config) {
+          return config.onFailAction(req, res);
+        }
+
         return res.status(400).end();
       }
 
