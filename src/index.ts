@@ -1,6 +1,6 @@
 import { Schema } from "joi";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-import { RequestHandler, NextHandler } from "next-connect";
+import { NextHandler, RequestHandler } from "next-connect";
 
 export type ValidableRequestFields = Pick<NextApiRequest, "query" | "body">;
 
@@ -8,33 +8,41 @@ export type ValidationSchemas = {
   [K in keyof ValidableRequestFields]?: Schema;
 };
 
-export default function withJoi(schemas: ValidationSchemas): RequestHandler<NextApiRequest, NextApiResponse>;
-export default function withJoi(schemas: ValidationSchemas, handler: NextApiHandler): NextApiHandler;
-export default function withJoi(
+export type ValidationFunction = (
   schemas: ValidationSchemas,
   handler?: NextApiHandler
-): NextApiHandler | RequestHandler<NextApiRequest, NextApiResponse> {
-  return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
-    const fields: (keyof ValidableRequestFields)[] = ["body", "query"];
+) => NextApiHandler | RequestHandler<NextApiRequest, NextApiResponse>;
 
-    const hasValidationErrors = fields.some((field) => {
-      const schema = schemas[field];
+export type OnValidationError = (req: NextApiRequest, res: NextApiResponse) => void | Promise<void>;
 
-      return schema && schema.required().validate(req[field]).error;
-    });
+export type Configuration = { onValidationError: OnValidationError };
 
-    if (hasValidationErrors) {
-      return res.status(400).end();
-    }
+export default function withJoi(config?: Configuration): ValidationFunction {
+  const onValidationError: OnValidationError = config ? config.onValidationError : (_, res) => res.status(400).end();
 
-    if (undefined !== next) {
-      return next();
-    }
+  return (schemas, handler) => {
+    return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
+      const fields: (keyof ValidableRequestFields)[] = ["body", "query"];
 
-    if (undefined !== handler) {
-      return handler(req, res);
-    }
+      const hasValidationErrors = fields.some((field) => {
+        const schema = schemas[field];
 
-    res.status(404).end();
+        return schema && schema.required().validate(req[field]).error;
+      });
+
+      if (hasValidationErrors) {
+        return onValidationError(req, res);
+      }
+
+      if (undefined !== next) {
+        return next();
+      }
+
+      if (undefined !== handler) {
+        return handler(req, res);
+      }
+
+      res.status(404).end();
+    };
   };
 }
