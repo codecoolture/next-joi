@@ -12,6 +12,9 @@
   - [Working with NEXT.js API Routes](#working-with-nextjs-api-routes)
   - [NEXT.js & `connect`-like middlewares](#nextjs--connect-like-middlewares)
 - [API](#api)
+  - [`withJoi(config?) => validate`](#withjoiconfig--validate)
+    - [`config`](#config)
+      - [`config.onFailAction`](#configonfailaction)
   - [`validate(schemas, handler)`](#validateschemas-handler)
     - [`schemas`](#schemas)
       - [`schemas.body`](#schemasbody)
@@ -30,16 +33,29 @@ This package does not bundle with [`next.js`](https://github.com/vercel/next.js)
 
 ### How does it work?
 
-The `validate` function will check the incoming request against the defined validation schemas. If the request does not comply with the schemas, it will be aborted inmediately and a `400 BAD REQUEST` response will be returned.
+The validation function will check the incoming request against the defined validation schemas. If the request does not comply with the schemas, it will be aborted inmediately and (by default) a `400 BAD REQUEST` response will be returned. It is possible to customize this error handling by passing a custom `onFailAction` function to the primary factory function.
+
+**lib/middlewares/validation.ts**
+
+```ts
+import withJoi from "next-joi";
+
+export default withJoi({
+  onFailAction: (_, res) => {
+    return res.status(400).end();
+  },
+});
+```
 
 ### Working with NEXT.js API Routes
 
-If you are using standard NEXT.js API Routes, you may use the `validate` function to wrap your route definition and pass
+If you are using standard NEXT.js API Routes, you may use the validation function to wrap your route definition and pass
 along the validation schema:
 
 ```ts
 import Joi from "joi";
-import validate from "next-joi";
+
+import validate from "/lib/middlewares/validation";
 
 const schema = Joi.object({
   birthdate: Joi.date().iso(),
@@ -55,13 +71,14 @@ export default validate({ body: schema }, (req, res) => {
 
 ### NEXT.js & `connect`-like middlewares
 
-If your routes are powered by using a package such as `next-connect`, you can still use `validate`!
-The function is ready to work as a `connect` middleware just out-of-the-box:
+If your routes are powered by using a package such as `next-connect`, you can still use `next-joi`!
+The middleware function is ready to work with `connect` just out-of-the-box:
 
 ```ts
 import Joi from "joi";
 import connect from "next-connect";
-import validate from "next-joi";
+
+import validate from "/lib/middlewares/validation";
 
 const schema = Joi.object({
   birthdate: Joi.date().iso(),
@@ -77,11 +94,35 @@ export default connect().post(validate({ body: schema }), (req, res) => {
 
 ## API
 
+### `withJoi(config?) => validate`
+
+This factory function may optionally receive a configuration object. It will return the actual validation function (`validate`) that can be used as API route middleware.
+
+#### `config`
+
+**Optional**
+
+If omitted, `next-joi` will use a default configuration.
+
+##### `config.onFailAction`
+
+**Required**
+
+Custom error function to handle validation errors. It will received the API request and response.
+
+```ts
+import withJoi from "next-joi";
+
+export default withJoi({
+  onFailAction: (req, res) => {
+    return res.status(400).end();
+  },
+});
+```
+
 ### `validate(schemas, handler)`
 
-The `validate` function has support to check two request's fields: `query` and `body`. Independently from the route's
-definition mechanism (see examples above), the first argument for this function should always be an object with the
-desired validation schemas.
+The `validate` function has support to check two request's fields: `query` and `body`. The first argument for this function should always be an object with the desired validation schemas.
 
 #### `schemas`
 
