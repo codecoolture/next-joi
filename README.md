@@ -14,7 +14,7 @@
 - [API](#api)
   - [`withJoi(config?) => validate`](#withjoiconfig--validate)
     - [`config`](#config)
-      - [`config.onFailAction`](#configonfailaction)
+      - [`config.onValidationError`](#configonvalidationerror)
   - [`validate(schemas, handler)`](#validateschemas-handler)
     - [`schemas`](#schemas)
       - [`schemas.body`](#schemasbody)
@@ -33,7 +33,7 @@ This package does not bundle with [`next.js`](https://github.com/vercel/next.js)
 
 ### How does it work?
 
-The validation function will check the incoming request against the defined validation schemas. If the request does not comply with the schemas, it will be aborted inmediately and (by default) a `400 BAD REQUEST` response will be returned. It is possible to customize this error handling by passing a custom `onFailAction` function to the primary factory function.
+The validation function will check the incoming request against the defined validation schemas. If the request does not comply with the schemas, it will be aborted inmediately and (by default) a `400 BAD REQUEST` response will be returned. It is possible to customize this error handling by passing a custom `onValidationError` function to the primary factory function.
 
 **lib/middlewares/validation.ts**
 
@@ -41,7 +41,7 @@ The validation function will check the incoming request against the defined vali
 import withJoi from "next-joi";
 
 export default withJoi({
-  onFailAction: (_, res) => {
+  onValidationError: (_, res) => {
     return res.status(400).end();
   },
 });
@@ -104,7 +104,7 @@ This factory function may optionally receive a configuration object. It will ret
 
 If omitted, `next-joi` will use a default configuration.
 
-##### `config.onFailAction`
+##### `config.onValidationError`
 
 **Required**
 
@@ -114,7 +114,7 @@ Custom error function to handle validation errors. It will received the API requ
 import withJoi from "next-joi";
 
 export default withJoi({
-  onFailAction: (req, res) => {
+  onValidationError: (req, res) => {
     return res.status(400).end();
   },
 });

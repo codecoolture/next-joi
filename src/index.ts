@@ -13,12 +13,12 @@ export type ValidationFunction = (
   handler?: NextApiHandler
 ) => NextApiHandler | RequestHandler<NextApiRequest, NextApiResponse>;
 
-export type OnFailAction = (req: NextApiRequest, res: NextApiResponse) => void | Promise<void>;
+export type OnValidationError = (req: NextApiRequest, res: NextApiResponse) => void | Promise<void>;
 
-export type Configuration = { onFailAction: OnFailAction };
+export type Configuration = { onValidationError: OnValidationError };
 
 export default function withJoi(config?: Configuration): ValidationFunction {
-  const onFailAction: OnFailAction = config ? config.onFailAction : (_, res) => res.status(400).end();
+  const onValidationError: OnValidationError = config ? config.onValidationError : (_, res) => res.status(400).end();
 
   return (schemas, handler) => {
     return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
@@ -31,7 +31,7 @@ export default function withJoi(config?: Configuration): ValidationFunction {
       });
 
       if (hasValidationErrors) {
-        return onFailAction(req, res);
+        return onValidationError(req, res);
       }
 
       if (undefined !== next) {

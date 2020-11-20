@@ -119,9 +119,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
 
       it("passes the control of the error handling to the injected function", async () => {
         const validateWithCustomErrorHandling = withJoi({
-          onFailAction: (_: NextApiRequest, res: NextApiResponse) => {
-            return res.status(403).json({ msg: "Using Forbidden instead" });
-          },
+          onValidationError: (_, res) => res.status(403).json({ msg: "Using Forbidden instead" }),
         });
 
         const handler = handlerBuilder(validateWithCustomErrorHandling, { body }, postANewUser);
