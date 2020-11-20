@@ -1,6 +1,6 @@
 import { Schema } from "joi";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-import { RequestHandler, NextHandler } from "next-connect";
+import { NextHandler, RequestHandler } from "next-connect";
 
 export type ValidableRequestFields = Pick<NextApiRequest, "query" | "body">;
 
@@ -13,9 +13,13 @@ export type ValidationFunction = (
   handler?: NextApiHandler
 ) => NextApiHandler | RequestHandler<NextApiRequest, NextApiResponse>;
 
-export type Configuration = { onFailAction: (req: NextApiRequest, res: NextApiResponse) => void | Promise<void> };
+export type OnFailAction = (req: NextApiRequest, res: NextApiResponse) => void | Promise<void>;
+
+export type Configuration = { onFailAction: OnFailAction };
 
 export default function withJoi(config?: Configuration): ValidationFunction {
+  const onFailAction: OnFailAction = config ? config.onFailAction : (_, res) => res.status(400).end();
+
   return (schemas, handler) => {
     return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
       const fields: (keyof ValidableRequestFields)[] = ["body", "query"];
@@ -27,11 +31,7 @@ export default function withJoi(config?: Configuration): ValidationFunction {
       });
 
       if (hasValidationErrors) {
-        if (config) {
-          return config.onFailAction(req, res);
-        }
-
-        return res.status(400).end();
+        return onFailAction(req, res);
       }
 
       if (undefined !== next) {

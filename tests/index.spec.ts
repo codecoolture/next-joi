@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import connect, { NextConnect, RequestHandler } from "next-connect";
-import validate, { ValidationFunction, ValidationSchemas } from "../src";
+import withJoi, { ValidationFunction, ValidationSchemas } from "../src";
 import { createTestServer, TestServer } from "./utils/TestServer";
 
 // This function simulates a NEXT.js API Route definition
@@ -14,10 +14,9 @@ type Handler =
   | NextConnect<NextApiRequest, NextApiResponse>
   | RequestHandler<NextApiRequest, NextApiResponse>;
 
-type BuildSuiteOptions = {
-  handlerBuilder: (validationFn: ValidationFunction, schemas: ValidationSchemas, handler: NextApiHandler) => Handler;
-  title: string;
-};
+type HandlerBuilder = (validate: ValidationFunction, schemas: ValidationSchemas, handler: NextApiHandler) => Handler;
+
+type BuildSuiteOptions = { title: string; handlerBuilder: HandlerBuilder };
 
 function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
   let server: TestServer;
@@ -31,10 +30,10 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
   });
 
   describe(title, () => {
-    const validationFn = validate();
+    const validate = withJoi();
 
     it("returns a 404 if there is no handler after validation", async () => {
-      const handler = handlerBuilder(validationFn, {}, (undefined as unknown) as any);
+      const handler = handlerBuilder(validate, {}, (undefined as unknown) as any);
 
       const response = await server.inject(handler, { method: "post" });
 
@@ -42,7 +41,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
     });
 
     it("returns a 200 response if there is no validation ", async () => {
-      const handler = handlerBuilder(validationFn, {}, postANewUser);
+      const handler = handlerBuilder(validate, {}, postANewUser);
 
       const response = await server.inject(handler, { method: "post" });
 
@@ -54,7 +53,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       // Object schema), defined schemas are always treated as mandatory.
       const query = Joi.object({ slug: Joi.string().alphanum().length(10).required() });
 
-      const handler = handlerBuilder(validationFn, { query }, postANewUser);
+      const handler = handlerBuilder(validate, { query }, postANewUser);
 
       const response = await server.inject(handler, { method: "post" });
 
@@ -65,7 +64,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       const schema = Joi.object({ email: Joi.string().email().required() });
 
       it("returns a 200 response if the validation passes", async () => {
-        const handler = handlerBuilder(validationFn, { query: schema }, postANewUser);
+        const handler = handlerBuilder(validate, { query: schema }, postANewUser);
 
         const response = await server.inject(handler, { query: { email: "jon.snow@thewall.org" }, method: "post" });
 
@@ -73,7 +72,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       });
 
       it("returns a 400 response if the validation doesn't pass", async () => {
-        const handler = handlerBuilder(validationFn, { query: schema }, postANewUser);
+        const handler = handlerBuilder(validate, { query: schema }, postANewUser);
 
         const response = await server.inject(handler, {
           query: { email: "something.that.is.not.an.email" },
@@ -91,7 +90,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       });
 
       it("returns a 200 response if the validation passes", async () => {
-        const handler = handlerBuilder(validationFn, { body: schema }, postANewUser);
+        const handler = handlerBuilder(validate, { body: schema }, postANewUser);
 
         const response = await server.inject(handler, {
           body: JSON.stringify({ age: 23, name: "Jon Snow" }),
@@ -103,7 +102,7 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       });
 
       it("returns a 400 response if the validation doesn't pass", async () => {
-        const handler = handlerBuilder(validationFn, { body: schema }, postANewUser);
+        const handler = handlerBuilder(validate, { body: schema }, postANewUser);
 
         const response = await server.inject(handler, {
           body: JSON.stringify({ age: 4, name: "Jon Snow" }),
@@ -119,13 +118,13 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       const body = Joi.object({ name: Joi.string().required() });
 
       it("passes the control of the error handling to the injected function", async () => {
-        const validationFnWithCustomErrorHandling = validate({
+        const validateWithCustomErrorHandling = withJoi({
           onFailAction: (_: NextApiRequest, res: NextApiResponse) => {
-            return res.status(403).json({ msg: "Something really bad happened" });
+            return res.status(403).json({ msg: "Using Forbidden instead" });
           },
         });
 
-        const handler = handlerBuilder(validationFnWithCustomErrorHandling, { body }, postANewUser);
+        const handler = handlerBuilder(validateWithCustomErrorHandling, { body }, postANewUser);
 
         const response = await server.inject(handler, {
           body: JSON.stringify({ foo: "bar" }),
@@ -134,27 +133,24 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
         });
 
         expect(response.status).toBe(403);
-        await expect(response.json()).resolves.toEqual({ msg: "Something really bad happened" });
+        await expect(response.json()).resolves.toEqual({ msg: "Using Forbidden instead" });
       });
     });
   });
 }
 
+const withNextMiddleware: HandlerBuilder = (validate, schemas, handler) => validate(schemas, handler);
+
+const withConnectMiddleware: HandlerBuilder = (validate, schemas, handler) => {
+  if (undefined === handler) {
+    // next-connect throws an error if passing an undefined handler
+    return connect().post(validate(schemas));
+  }
+
+  return connect().post(validate(schemas), handler);
+};
+
 describe("next-joi", () => {
-  buildSuite({
-    handlerBuilder: (validationFn, schemas, handler) => validationFn(schemas, handler),
-    title: "working as a simple NEXT middleware",
-  });
-
-  buildSuite({
-    handlerBuilder: (validationFn, schemas, handler) => {
-      if (undefined === handler) {
-        // next-connect throws an error if passing an undefined handler
-        return connect().post(validationFn(schemas));
-      }
-
-      return connect().post(validationFn(schemas), handler);
-    },
-    title: "working as a connect-like middleware",
-  });
+  buildSuite({ title: "working as a simple NEXT middleware", handlerBuilder: withNextMiddleware });
+  buildSuite({ title: "working as a connect-like middleware", handlerBuilder: withConnectMiddleware });
 });
