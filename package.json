@@ -51,7 +51,7 @@
   "scripts": {
     "prepublish": "yarn test && tsc",
     "preversion": "yarn test && tsc",
-    "postversion": "git push --tags && yarn publish . --tag $npm_package_version && git push && echo \"Successfully released version $npm_package_version!\"",
+    "postversion": "git push --tags && yarn publish . --new-version $npm_package_version && git push && echo \"Successfully released version $npm_package_version!\"",
     "test": "jest"
   },
   "husky": {
