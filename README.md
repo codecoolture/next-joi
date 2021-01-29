@@ -6,6 +6,10 @@
   Validate NEXT.js API Routes with <em>joi</em> 😄
 </p>
 
+<p align="center">
+  <img src="https://github.com/codecoolture/next-joi/workflows/test/badge.svg?branch=trunk" alt="github action badge">
+</p>
+
 - [Install](#install)
 - [Getting started](#getting-started)
   - [How does it work?](#how-does-it-work)
