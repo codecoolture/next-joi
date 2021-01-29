@@ -1,6 +1,6 @@
 {
   "name": "next-joi",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Validate NEXT.js API Routes with joi",
   "keywords": [
     "nextjs",
