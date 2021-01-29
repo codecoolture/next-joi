@@ -114,6 +114,45 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       });
     });
 
+    describe("handling headers validation", () => {
+      const schema = Joi.object({
+        "accept-language": Joi.string().valid("en", "es").required(),
+      });
+
+      it("returns a 400 by default if unknown headers are not ignored", async () => {
+        const handler = handlerBuilder(validate, { headers: schema }, postANewUser);
+
+        const response = await server.inject(handler, {
+          headers: { "accept-language": "en" },
+          method: "post",
+        });
+
+        expect(response.status).toBe(400);
+      });
+
+      it("returns a 200 response if the validation passes", async () => {
+        const handler = handlerBuilder(validate, { headers: schema.unknown() }, postANewUser);
+
+        const response = await server.inject(handler, {
+          headers: { "accept-language": "en" },
+          method: "post",
+        });
+
+        expect(response.status).toBe(200);
+      });
+
+      it("returns a 400 response if the validation doesn't pass", async () => {
+        const handler = handlerBuilder(validate, { headers: schema.unknown() }, postANewUser);
+
+        const response = await server.inject(handler, {
+          headers: { "accept-language": "pt" },
+          method: "post",
+        });
+
+        expect(response.status).toBe(400);
+      });
+    });
+
     describe("working with custom error handling", () => {
       const body = Joi.object({ name: Joi.string().required() });
 
