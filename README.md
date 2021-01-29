@@ -22,6 +22,7 @@
   - [`validate(schemas, handler)`](#validateschemas-handler)
     - [`schemas`](#schemas)
       - [`schemas.body`](#schemasbody)
+      - [`schemas.headers`](#schemasheaders)
       - [`schemas.query`](#schemasquery)
     - [`handler`](#handler)
 
@@ -126,7 +127,7 @@ export default withJoi({
 
 ### `validate(schemas, handler)`
 
-The `validate` function has support to check two request's fields: `query` and `body`. The first argument for this function should always be an object with the desired validation schemas.
+The `validate` function has support to check the following request fields: `body`, `headers` and `query`. The first argument for this function should always be an object with the desired validation schemas.
 
 #### `schemas`
 
@@ -137,6 +138,16 @@ Even if empty, this argument is required.
 ##### `schemas.body`
 
 **Optional**
+
+A valid `joi` schema.
+
+##### `schemas.headers`
+
+**Optional**
+
+> Note: since most of the time you may receive more headers than expected, it is a good practice to make this
+> schema always support [`unknown`](https://joi.dev/api/?v=17.3.0#objectunknownallow) keys. Otherwise, the validation
+> will always fail.
 
 A valid `joi` schema.
 

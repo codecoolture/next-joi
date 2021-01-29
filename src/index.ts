@@ -2,7 +2,7 @@ import { Schema } from "joi";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { NextHandler, RequestHandler } from "next-connect";
 
-export type ValidableRequestFields = Pick<NextApiRequest, "query" | "body">;
+export type ValidableRequestFields = Pick<NextApiRequest, "body" | "headers" | "query">;
 
 export type ValidationSchemas = {
   [K in keyof ValidableRequestFields]?: Schema;
@@ -22,7 +22,7 @@ export default function withJoi(config?: Configuration): ValidationFunction {
 
   return (schemas, handler) => {
     return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
-      const fields: (keyof ValidableRequestFields)[] = ["body", "query"];
+      const fields: (keyof ValidableRequestFields)[] = ["body", "headers", "query"];
 
       const hasValidationErrors = fields.some((field) => {
         const schema = schemas[field];
