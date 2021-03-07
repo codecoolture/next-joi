@@ -1,4 +1,4 @@
-import { Schema } from "joi";
+import { Schema, ValidationError } from "joi";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { NextHandler, RequestHandler } from "next-connect";
 
@@ -13,7 +13,11 @@ export type ValidationFunction = (
   handler?: NextApiHandler
 ) => NextApiHandler | RequestHandler<NextApiRequest, NextApiResponse>;
 
-export type OnValidationError = (req: NextApiRequest, res: NextApiResponse) => void | Promise<void>;
+export type OnValidationError = (
+  req: NextApiRequest,
+  res: NextApiResponse,
+  error: ValidationError
+) => void | Promise<void>;
 
 export type Configuration = { onValidationError: OnValidationError };
 
@@ -24,14 +28,16 @@ export default function withJoi(config?: Configuration): ValidationFunction {
     return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
       const fields: (keyof ValidableRequestFields)[] = ["body", "headers", "query"];
 
-      const hasValidationErrors = fields.some((field) => {
+      const validationError = fields.reduce<ValidationError | undefined>((error, field) => {
+        if (error) return error;
+
         const schema = schemas[field];
 
-        return schema && schema.required().validate(req[field]).error;
-      });
+        return schema?.required().validate(req[field]).error;
+      }, undefined);
 
-      if (hasValidationErrors) {
-        return onValidationError(req, res);
+      if (validationError) {
+        return onValidationError(req, res, validationError);
       }
 
       if (undefined !== next) {
