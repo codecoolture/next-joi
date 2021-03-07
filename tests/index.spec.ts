@@ -174,11 +174,11 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
       });
 
       it("passes the Joi error message to the injected function", async () => {
-        const handler = handlerBuilder(
-          withJoi({ onValidationError: (req, res, error) => res.status(400).json(error) }),
-          { body },
-          postANewUser
-        );
+        const validateWithCustomErrorHandling = withJoi({
+          onValidationError: (_, res, error) => res.status(400).json(error),
+        });
+
+        const handler = handlerBuilder(validateWithCustomErrorHandling, { body }, postANewUser);
 
         const response = await server.inject(handler, {
           body: JSON.stringify({}),
@@ -186,10 +186,11 @@ function buildSuite({ handlerBuilder, title }: BuildSuiteOptions): void {
           method: "post",
         });
 
-        const data = await response.json();
-
-        expect(response.status).toBe(400);
-        expect(data?.details?.[0]?.message).toBe('"name" is required');
+        await expect(response.json()).resolves.toEqual(
+          expect.objectContaining({
+            details: expect.arrayContaining([expect.objectContaining({ message: '"name" is required' })]),
+          })
+        );
       });
     });
   });

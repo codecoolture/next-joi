@@ -29,14 +29,16 @@ export default function withJoi(config?: Configuration): ValidationFunction {
       const fields: (keyof ValidableRequestFields)[] = ["body", "headers", "query"];
 
       const validationError = fields.reduce<ValidationError | undefined>((error, field) => {
-        if (error) return error;
+        if (undefined !== error) {
+          return error;
+        }
 
         const schema = schemas[field];
 
-        return schema?.required().validate(req[field]).error;
+        return schema && schema.required().validate(req[field]).error;
       }, undefined);
 
-      if (validationError) {
+      if (undefined !== validationError) {
         return onValidationError(req, res, validationError);
       }
 
