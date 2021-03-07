@@ -113,13 +113,13 @@ If omitted, `next-joi` will use a default configuration.
 
 **Required**
 
-Custom error function to handle validation errors. It will received the API request and response.
+Custom error function to handle validation errors. It will receive the API request, response, and [validation error](https://joi.dev/api/?v=17.4.0#validationerror).
 
 ```ts
 import withJoi from "next-joi";
 
 export default withJoi({
-  onValidationError: (req, res) => {
+  onValidationError: (req, res, error) => {
     return res.status(400).end();
   },
 });
