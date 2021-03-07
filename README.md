@@ -38,7 +38,7 @@ This package does not bundle with [`next.js`](https://github.com/vercel/next.js)
 
 ### How does it work?
 
-The validation function will check the incoming request against the defined validation schemas. If the request does not comply with the schemas, it will be aborted inmediately and (by default) a `400 BAD REQUEST` response will be returned. It is possible to customize this error handling by passing a custom `onValidationError` function to the primary factory function.
+The validation function will check the incoming request against the defined validation schemas. If the request does not comply with the schemas, it will be aborted immediately, and (by default) a `400 BAD REQUEST` response will be returned. It is possible to customize this error handling by passing a custom `onValidationError` function to the primary factory function.
 
 **lib/middlewares/validation.ts**
 
@@ -145,9 +145,9 @@ A valid `joi` schema.
 
 **Optional**
 
-> Note: since most of the time you may receive more headers than expected, it is a good practice to make this
+> Note: since most of the time, you may receive more headers than expected, it is a good practice to make this
 > schema always support [`unknown`](https://joi.dev/api/?v=17.3.0#objectunknownallow) keys. Otherwise, the validation
-> will always fail.
+> will fail.
 
 A valid `joi` schema.
 
