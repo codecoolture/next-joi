@@ -8,11 +8,11 @@
     "middleware",
     "typescript"
   ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "files": [
-    "dist/index.js",
-    "dist/index.d.ts"
+    "dist/src/index.js",
+    "dist/src/index.d.ts"
   ],
   "author": {
     "email": "sergio@codecoolture.com",
@@ -49,10 +49,12 @@
     "typescript": "^3.9.7"
   },
   "scripts": {
+    "lint": "eslint . --ext .ts",
     "prepublish": "yarn test && tsc",
     "preversion": "yarn test && tsc",
     "postversion": "git push --tags && yarn publish . --new-version $npm_package_version && git push && echo \"Successfully released version $npm_package_version!\"",
-    "test": "jest"
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
   },
   "husky": {
     "hooks": {
