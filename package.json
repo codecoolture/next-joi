@@ -37,7 +37,7 @@
     "@typescript-eslint/parser": "^4.20.0",
     "eslint": "^7.23.0",
     "eslint-config-prettier": "^8.1.0",
-    "husky": "^4.2.5",
+    "husky": "^6.0.0",
     "isomorphic-unfetch": "^3.1.0",
     "jest": "^26.6.3",
     "joi": "^17.4.0",
@@ -54,11 +54,7 @@
     "preversion": "yarn test && tsc",
     "postversion": "git push --tags && yarn publish . --new-version $npm_package_version && git push && echo \"Successfully released version $npm_package_version!\"",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "yarn test"
-    }
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install"
   }
 }
