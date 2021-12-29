@@ -42,12 +42,12 @@ export default function withJoi(config?: Configuration): ValidationFunction {
         return onValidationError(req, res, validationError);
       }
 
-      if (undefined !== next) {
-        return next();
-      }
-
       if (undefined !== handler) {
         return handler(req, res);
+      }
+
+      if (undefined !== next) {
+        return next();
       }
 
       res.status(404).end();
