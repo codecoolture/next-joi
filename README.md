@@ -120,7 +120,7 @@ import withJoi from "next-joi";
 
 export default withJoi({
   onValidationError: (req, res, error) => {
-    return res.status(400).end();
+    res.status(400).end();
   },
 });
 ```
