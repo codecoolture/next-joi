@@ -1,4 +1,4 @@
-import { Schema, ValidationError } from "joi";
+import { Schema, ValidationError, ValidationOptions } from "joi";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { NextHandler, RequestHandler } from "next-connect";
 
@@ -19,10 +19,18 @@ export type OnValidationError = (
   error: ValidationError
 ) => void | Promise<void>;
 
-export type Configuration = { onValidationError: OnValidationError };
+export type Configuration = {
+  onValidationError?: OnValidationError,
+  validationOptions?: ValidationOptions,
+};
 
-export default function withJoi(config?: Configuration): ValidationFunction {
-  const onValidationError: OnValidationError = config ? config.onValidationError : (_, res) => res.status(400).end();
+const defaultConfig = {
+  onValidationError: ((_, res) => res.status(400).end()) as OnValidationError,
+}
+
+export default function withJoi(userConfig: Configuration = {}): ValidationFunction {
+  const config = { ...defaultConfig, ...userConfig };
+  const onValidationError: OnValidationError = config.onValidationError;
 
   return (schemas, handler) => {
     return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
@@ -35,7 +43,7 @@ export default function withJoi(config?: Configuration): ValidationFunction {
 
         const schema = schemas[field];
 
-        return schema && schema.required().validate(req[field]).error;
+        return schema && schema.required().validate(req[field], config.validationOptions).error;
       }, undefined);
 
       if (undefined !== validationError) {
