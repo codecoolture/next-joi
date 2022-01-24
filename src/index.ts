@@ -28,26 +28,39 @@ const defaultConfig = {
   onValidationError: ((_, res) => res.status(400).end()) as OnValidationError,
 }
 
+const supportedFields: (keyof ValidableRequestFields)[] = ["body", "headers", "query"];
+
 export default function withJoi(userConfig: Configuration = {}): ValidationFunction {
   const config = { ...defaultConfig, ...userConfig };
   const onValidationError: OnValidationError = config.onValidationError;
 
   return (schemas, handler) => {
-    return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
-      const fields: (keyof ValidableRequestFields)[] = ["body", "headers", "query"];
+    const keys = Object.keys(schemas) as (keyof ValidableRequestFields)[];
+    const fieldsToValidate = keys.filter(field => supportedFields.includes(field));
 
-      const validationError = fields.reduce<ValidationError | undefined>((error, field) => {
-        if (undefined !== error) {
-          return error;
+    return (req: NextApiRequest, res: NextApiResponse, next?: NextHandler) => {
+      try {
+        const values = fieldsToValidate.map((field) => {
+          const schema = schemas[field] as Schema;
+
+          const result = schema.required().validate(req[field], config.validationOptions);
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          return [field, result.value] as [keyof ValidableRequestFields, any];
+        });
+
+        if (config.validationOptions?.convert !== false) {
+          values.forEach(([field, value]) => req[field] = value);
+        }
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          return onValidationError(req, res, error);
         }
 
-        const schema = schemas[field];
-
-        return schema && schema.required().validate(req[field], config.validationOptions).error;
-      }, undefined);
-
-      if (undefined !== validationError) {
-        return onValidationError(req, res, validationError);
+        throw error;
       }
 
       if (undefined !== next) {
