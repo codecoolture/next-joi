@@ -38,15 +38,15 @@ export default function withJoi(config?: Configuration): ValidationFunction {
         return schema && schema.required().validate(req[field]).error;
       }, undefined);
 
-      if (undefined !== validationError) {
+      if (validationError) {
         return onValidationError(req, res, validationError);
       }
 
-      if (undefined !== next) {
+      if (next) {
         return next();
       }
 
-      if (undefined !== handler) {
+      if (handler) {
         return handler(req, res);
       }
 
